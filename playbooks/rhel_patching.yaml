@@ -1,0 +1,30 @@
+---
+- name: Playbook for patching the servers
+  hosts: all
+  become: yes
+  ignore_errors: no
+  gather_facts: yes
+  serial: 1
+
+  tasks:
+    - name: Checking whether space available or not for update
+      debug:
+        msg: "{{ ansible_mounts.mount }}"
+      tags: space_status
+
+    - name: Patching rhel servers
+      dnf:
+        name: "*"
+        bugfix: true
+        security: true
+        skip_broken: true
+        update_cache: true
+        state: latest
+      when: ansible_distribution == "RedHat"
+
+    - name: Patching ubuntu servers
+      apt:
+        update_cache: true
+        upgrade: full
+      when: ansible_distribution == "Ubuntu"
+...

@@ -1,0 +1,9 @@
+---
+- hosts: all
+  vars:
+    variable: "hello machines"
+  tasks:
+    - name: Printing the variable value.
+      debug:
+        msg: "{{ variable }}"
+...
