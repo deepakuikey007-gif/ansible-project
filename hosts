@@ -22,8 +22,8 @@
 [server1]
 192.168.56.31	ansible_python_interpreter=/usr/bin/python3.11
 
-#[server2]
-#192.168.56.41	ansible_python_interpreter=/usr/bin/python3.6
+[server2]
+192.168.56.41	ansible_python_interpreter=/usr/bin/python3.6
 
 [server3]
 192.168.56.51	ansible_python_interpreter=/usr/bin/python3.14
