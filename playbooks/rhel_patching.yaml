@@ -1,6 +1,6 @@
 ---
 - name: Playbook for patching the servers
-  hosts: all
+  hosts: server1
   become: yes
   ignore_errors: no
   gather_facts: yes
@@ -8,8 +8,17 @@
 
   tasks:
     - name: Checking whether space available or not for update
-      debug:
-        msg: "{{ ansible_mounts.mount }}"
+      set_fact:
+        root_mount: "{{ ansible_mounts | selectattr('mount','equalto','/') | first }}"
+      tags: space_status
+
+    - name: Stop if insufficient space
+      fail:
+        msg: 
+          " The available space is
+          {{ (root_mount.size_available/1024**3) | round(2) }} GB
+          atleast 2GB is required "
+      when: root_mount.size_available < (2 * 1024 * 1024 * 1024 )
       tags: space_status
 
     - name: Patching rhel servers
@@ -21,10 +30,12 @@
         update_cache: true
         state: latest
       when: ansible_distribution == "RedHat"
+      tags: patching
 
     - name: Patching ubuntu servers
       apt:
         update_cache: true
         upgrade: full
       when: ansible_distribution == "Ubuntu"
+      tags: patching
 ...
