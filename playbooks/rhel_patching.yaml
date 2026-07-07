@@ -20,13 +20,10 @@
           atleast 2GB is required "
       when: root_mount.size_available < (2 * 1024 * 1024 * 1024 )
       tags: space_status
-
-    - name: Patching rhel servers
+    
+    - name: Patching redhat servers
       dnf:
         name: "*"
-        bugfix: true
-        security: true
-        skip_broken: true
         update_cache: true
         state: latest
       when: ansible_distribution == "RedHat"
@@ -35,7 +32,31 @@
     - name: Patching ubuntu servers
       apt:
         update_cache: true
-        upgrade: full
+        upgrade: yes
       when: ansible_distribution == "Ubuntu"
       tags: patching
+
+    - name: Setting latest kernel for redhat
+      command: grubby --set-default=/boot/vmlinuz-4.18.0-553.139.1.el8_10.x86_64
+      when: ansible_distribution == "Redhat" and ansible_kernel == "4.18.0-553.124.1.el8_10.x86_64"
+
+    - name: Updating grub entry for Ubuntu
+      lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_DEFAULT='
+        line: GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 7.0.0-27-generic"
+      when: ansible_distribution == "Ubuntu" and ansible_kernel == "7.0.0-22-generic"
+
+    - name: Setting latest kernel for Ubuntu
+      command: update-grub
+      when: ansible_distribution == "Ubuntu" and ansible_kernel == "7.0.0-22-generic"
+
+    - name: Rebooting machines to apply changes
+      reboot:
+        msg: "Rebooting machine in 5 seconds"
+        pre_reboot_delay: 5
+        post_reboot_delay: 10
+        reboot_timeout: 60
+      tags: reboot
+     
 ...
