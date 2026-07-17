@@ -1,6 +1,6 @@
 ---
 - name: Playbook for patching the servers
-  hosts: dev_nodes
+  hosts: all
   become: yes
   ignore_errors: no
   gather_facts: yes
