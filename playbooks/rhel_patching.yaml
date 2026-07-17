@@ -1,12 +1,13 @@
 ---
 - name: Playbook for patching the servers
-  hosts: worker_nodes
+  hosts: dev_nodes
   become: yes
   ignore_errors: no
   gather_facts: yes
   serial: 1
 
   tasks:
+
     - name: Checking whether space available or not for update
       set_fact:
         root_mount: "{{ ansible_mounts | selectattr('mount','equalto','/') | first }}"
@@ -39,6 +40,7 @@
     - name: Setting latest kernel for redhat
       command: grubby --set-default=/boot/vmlinuz-4.18.0-553.139.1.el8_10.x86_64
       when: ansible_distribution == "Redhat" and ansible_kernel == "4.18.0-553.124.1.el8_10.x86_64"
+      notify: restart-machines
 
     - name: Updating grub entry for Ubuntu
       lineinfile:
@@ -50,13 +52,30 @@
     - name: Setting latest kernel for Ubuntu
       command: update-grub
       when: ansible_distribution == "Ubuntu" and ansible_kernel == "7.0.0-22-generic"
+      notify: restart-machines
 
-    - name: Rebooting machines to apply changes
+    - name: Checking if reboot is required for redhat machine
+      command: needs-restarting -r
+      when: ansible_distribution == "Redhat"
+      notify: restart-machines
+
+    - name: Checking reboot file status for ubuntu machine
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+      changed_when: reboot_required_file.stat.exists
+      when: ansible_distribution == "Ubuntu"
+      notify: restart-machines
+      tags: file_exist
+
+
+  handlers:
+
+    - name: restart-machines
       reboot:
         msg: "Rebooting machine in 5 seconds"
         pre_reboot_delay: 5
         post_reboot_delay: 10
         reboot_timeout: 60
-      tags: reboot
      
 ...
