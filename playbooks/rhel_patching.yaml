@@ -31,13 +31,17 @@
         - name: Checking if reboot is required for redhat machine
           command: needs-restarting -r
           register: reboot_status
+          changed_when: false
+          failed_when: false
 
-        - name: Reboot is required, Now rebooting redhat machine
-          command: reboot
-          when: reboot_status.rc == 1
+        - name: Reboot is required.
+          debug:
+            msg: "Now Rebooting the machine {{ ansible_hostname }}"
+          changed_when: true
+          when: reboot_status.rc == 0
+          notify: restart-machines
 
       when: ansible_distribution == "RedHat"
-      ignore_errors: yes
       tags: redhat_patching
 
     - name: Setting latest kernel for redhat
